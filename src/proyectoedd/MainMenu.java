@@ -10,6 +10,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import proyectoedd.Grafo.Neurona;
+import proyectoedd.Grafo.Sinapsis;
 
 /**
  *
@@ -36,27 +38,46 @@ public class MainMenu extends javax.swing.JFrame {
     private void initComponents() {
 
         jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jButton1.setText("Cargar arhivo");
         jButton1.addActionListener(this::jButton1ActionPerformed);
 
+        jButton2.setText("Carga datos de paciente");
+        jButton2.addActionListener(this::jButton2ActionPerformed);
+
+        jButton3.setText("jButton3");
+        jButton3.addActionListener(this::jButton3ActionPerformed);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(33, 33, 33)
-                .addComponent(jButton1)
-                .addContainerGap(377, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(23, 23, 23)
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(29, 29, 29)
+                        .addComponent(jButton2))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(101, 101, 101)
+                        .addComponent(jButton3)))
+                .addContainerGap(469, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(32, 32, 32)
-                .addComponent(jButton1)
-                .addContainerGap(324, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1)
+                    .addComponent(jButton2))
+                .addGap(85, 85, 85)
+                .addComponent(jButton3)
+                .addContainerGap(337, Short.MAX_VALUE))
         );
 
         pack();
@@ -83,10 +104,24 @@ public class MainMenu extends javax.swing.JFrame {
             // El ciclo lee línea por línea hasta que encuentra el final del archivo (null)
             while ((linea = br.readLine()) != null) {
                 
+                //MEL, Melatonina, Inhibitorio, 0.5, "Regula el ciclo circadiano sueño-vigilia. "
+                
                 String[] datos = linea.split(",");
                 
-                System.out.println(datos[0]);
+                String ID = datos[0];
+                String nombre = datos[1];
+                NeuroTransmisor.Efecto efecto = NeuroTransmisor.Efecto.EXCITATORIO;
+
+                if(datos[2].equals("Excitatorio")) efecto = NeuroTransmisor.Efecto.EXCITATORIO;
+                if(datos[2].equals("Inhibitorio")) efecto = NeuroTransmisor.Efecto.INHIBITORIO;
+                if(datos[2].equals("Modulador")) efecto = NeuroTransmisor.Efecto.MODULADOR;
                 
+                float velocidad = Float.parseFloat(datos[3]);
+                String desc = datos[4];
+                
+                NeuroTransmisor n = new NeuroTransmisor(ID, nombre, efecto, velocidad, desc);
+               
+                ProyectoEDD.controlador.AddNeuro(ID, n);
             }
             
         } catch (IOException e) {
@@ -96,6 +131,58 @@ public class MainMenu extends javax.swing.JFrame {
             
         }
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        JFileChooser selectorArchivo = new JFileChooser();
+        selectorArchivo.setDialogTitle("Seleccionar Red Sináptica (.csv)");
+
+        FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos CSV (*.csv)", "csv");
+        selectorArchivo.setFileFilter(filtro);
+        
+        int resultado = selectorArchivo.showOpenDialog(this);
+        
+        if (resultado == JFileChooser.APPROVE_OPTION) 
+        {
+            File archivo = selectorArchivo.getSelectedFile();
+            try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
+            String linea;
+
+            while ((linea = br.readLine()) != null) {
+                
+                //origen,destino,distancia,ID_Neurotransmisor,coheficiente_eficiencia_sináptica
+                
+                //1, 2, 0.85, GLU, 1 
+                //1, 3, 0.42, DA, 1 
+                //2, 4, 0.91, GLU, 1 
+                //3, 4, 0.15, GABA, 1 
+                //4, 5, 0.77, GLU, 1 
+                //5, 6, 0.33, DA, 1 
+                //2, 6 ,0.55, ACH, 1
+                
+                String[] datos = linea.split(",");
+                
+                String origen = datos[0];
+                String destino = datos[1];
+                float distancia = Float.parseFloat(datos[2]);
+                String IDNT = datos[3];
+                float CES = Float.parseFloat(datos[4]);
+                
+                Neurona neurona1 = Utilidades.GetNeurona(origen);
+                Neurona neurona2 = Utilidades.GetNeurona(destino);
+                
+                Sinapsis sinapsis = new Sinapsis(neurona1, neurona2, distancia, IDNT, CES);
+                neurona1.agregarConexion(sinapsis);
+            }
+            
+            } catch (IOException e) {
+                System.err.println("Error al leer el archivo: " + e.getMessage());
+            }
+        }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        Controlador.controlador.CrearGrafo();
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -121,5 +208,7 @@ public class MainMenu extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     // End of variables declaration//GEN-END:variables
 }

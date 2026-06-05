@@ -9,11 +9,14 @@ package proyectoedd;
  * @author gianc
  */
 public class ProyectoEDD {
+    
+    public static Controlador controlador;
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         java.awt.EventQueue.invokeLater(() -> new MainMenu().setVisible(true));
+        controlador = new Controlador();
     }
 }
